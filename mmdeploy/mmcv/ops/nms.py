@@ -321,9 +321,9 @@ def _multiclass_nms_single(boxes: Tensor,
 
     Single batch nms could be optimized.
     """
-    if version.parse(torch.__version__) < version.parse('1.13.0'):
-        max_output_boxes_per_class = torch.LongTensor(
-            [max_output_boxes_per_class])
+    # if version.parse(torch.__version__) < version.parse('1.13.0'):
+    #     max_output_boxes_per_class = torch.LongTensor(
+    #         [max_output_boxes_per_class])
     iou_threshold = torch.tensor([iou_threshold], dtype=torch.float32)
     score_threshold = torch.tensor([score_threshold], dtype=torch.float32)
 

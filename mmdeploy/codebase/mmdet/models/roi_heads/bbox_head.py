@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import List, Optional, Tuple
+import math
 
 import torch
 import torch.nn.functional as F
@@ -122,26 +123,42 @@ def bbox_head__predict_by_feat(self,
     # get nms params
     post_params = get_post_processing_params(ctx.cfg)
     max_output_boxes_per_class = post_params.max_output_boxes_per_class
-    iou_threshold = rcnn_test_cfg.nms.get('iou_threshold',
-                                          post_params.iou_threshold)
-    score_threshold = rcnn_test_cfg.get('score_thr',
-                                        post_params.score_threshold)
-    if torch.onnx.is_in_onnx_export():
-        pre_top_k = post_params.pre_top_k
-    else:
-        # For two stage partition post processing
-        pre_top_k = -1 if post_params.pre_top_k >= bboxes.shape[1] \
-            else post_params.pre_top_k
-    keep_top_k = rcnn_test_cfg.get('max_per_img', post_params.keep_top_k)
-    nms_type = rcnn_test_cfg.nms.get('type')
+    iou_threshold = post_params.get('iou_threshold', 
+                                    rcnn_test_cfg.nms['iou_threshold'])
+    # iou_threshold = rcnn_test_cfg.nms.get('iou_threshold',
+    #                                       post_params.iou_threshold)
+    score_threshold = post_params.get('score_threshold', 
+                                      rcnn_test_cfg['score_thr'])
+
+    # score_threshold = rcnn_test_cfg.get('score_thr',
+    #                                     post_params.score_threshold)
+    pre_top_k = post_params.pre_top_k
+
+    # keep_top_k = rcnn_test_cfg.get('max_per_img', post_params.keep_top_k)
+    keep_top_k = post_params.get('keep_top_k', rcnn_test_cfg['max_per_img'])
+    version = post_params.get('version', 99)
+    # nms_type = rcnn_test_cfg.nms.get('type')
     dets, labels = multiclass_nms(
         bboxes,
         scores,
         max_output_boxes_per_class,
-        nms_type=nms_type,
         iou_threshold=iou_threshold,
         score_threshold=score_threshold,
         pre_top_k=pre_top_k,
         keep_top_k=keep_top_k)
+    batched_dets = dets[..., :4]
+    batched_scores = dets[..., -1]
+    batched_labels = labels
+    batched_num_dets = (batched_scores > 0).sum(1, keepdim=True)
+    # encode version into scores
+    batched_scores = embedding_version2scores(batched_scores, version)
 
-    return dets, labels
+    return batched_num_dets, batched_dets, batched_scores, batched_labels, torch.tensor(version, dtype=torch.int32)
+
+def embedding_version2scores(scores: torch.Tensor, version: int, exponent=2):
+    assert version >= 0 and version < 100, f"ERROR: version need in range [0,100)"
+    scale = math.pow(10, exponent)
+    scores = (scores * scale).to(torch.int32).to(torch.float32)
+    version = version / 100
+    scores = (scores + version) / scale
+    return scores

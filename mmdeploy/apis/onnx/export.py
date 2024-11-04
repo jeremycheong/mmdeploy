@@ -2,6 +2,8 @@
 from copy import deepcopy
 from functools import partial
 from typing import Any, Dict, Optional, Sequence, Tuple, Union
+from io import BytesIO
+import onnx
 
 import torch
 
@@ -103,6 +105,8 @@ def export(model: torch.nn.Module,
     if 'opset' not in context_info:
         context_info['opset'] = opset_version
 
+    version = deploy_cfg['codebase_config']['post_processing'].get('version', 99)
+
     # patch model
     patched_model = patch_model(model, cfg=deploy_cfg, backend=backend, ir=ir)
 
@@ -135,17 +139,33 @@ def export(model: torch.nn.Module,
             args = tuple([_.cpu() for _ in args])
         else:
             raise RuntimeError(f'Not supported args: {args}')
-        torch.onnx.export(
-            patched_model,
-            args,
-            output_path,
-            export_params=True,
-            input_names=input_names,
-            output_names=output_names,
-            opset_version=opset_version,
-            dynamic_axes=dynamic_axes,
-            keep_initializers_as_inputs=keep_initializers_as_inputs,
-            verbose=verbose)
+        
+        with BytesIO() as f:
+            torch.onnx.export(
+                patched_model,
+                args,
+                f,
+                export_params=True,
+                input_names=input_names,
+                output_names=output_names,
+                opset_version=opset_version,
+                dynamic_axes=dynamic_axes,
+                keep_initializers_as_inputs=keep_initializers_as_inputs,
+                verbose=verbose)
+            
+            f.seek(0)
+            onnx_model = onnx.load(f)
+            onnx.checker.check_model(onnx_model)
+            
+        try:
+            import onnxsim
+            onnx_model, check = onnxsim.simplify(onnx_model)
+            assert check, 'assert check failed'
+        except Exception as e:
+            logger.info(f'Simplify failure: {e}')
+        onnx_model.producer_name = '10615652'
+        onnx_model.producer_version = str(version)
+        onnx.save(onnx_model, output_path)
 
         if input_metas is not None:
             patched_model.forward = model_forward
