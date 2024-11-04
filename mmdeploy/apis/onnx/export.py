@@ -163,7 +163,6 @@ def export(model: torch.nn.Module,
             assert check, 'assert check failed'
         except Exception as e:
             logger.info(f'Simplify failure: {e}')
-        onnx_model.producer_name = '10615652'
         onnx_model.producer_version = str(version)
         onnx.save(onnx_model, output_path)
 
