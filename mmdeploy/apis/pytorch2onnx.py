@@ -15,6 +15,7 @@ def torch2onnx(img: Any,
                model_cfg: Union[str, mmengine.Config],
                model_checkpoint: Optional[str] = None,
                version:int = 99,
+               score_thr:float = 0.5,
                device: str = 'cuda:0'):
     """Convert PyTorch model to ONNX model.
 
@@ -73,9 +74,10 @@ def torch2onnx(img: Any,
     input_metas = {'data_samples': data_samples, 'mode': 'predict'}
 
     # export to onnx
+    deploy_cfg['codebase_config']['post_processing']['version'] = version
+    deploy_cfg['codebase_config']['post_processing']['score_threshold'] = score_thr
     context_info = dict()
     context_info['deploy_cfg'] = deploy_cfg
-    deploy_cfg['codebase_config']['post_processing']['version'] = version
     output_prefix = osp.join(work_dir,
                              osp.splitext(osp.basename(save_file))[0])
     backend = get_backend(deploy_cfg).value
