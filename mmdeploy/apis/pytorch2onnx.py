@@ -16,6 +16,7 @@ def torch2onnx(img: Any,
                model_checkpoint: Optional[str] = None,
                version:int = 99,
                score_thr:float = 0.5,
+               iou_thr:float = 0.5,
                device: str = 'cuda:0'):
     """Convert PyTorch model to ONNX model.
 
@@ -76,6 +77,7 @@ def torch2onnx(img: Any,
     # export to onnx
     deploy_cfg['codebase_config']['post_processing']['version'] = version
     deploy_cfg['codebase_config']['post_processing']['score_threshold'] = score_thr
+    deploy_cfg['codebase_config']['post_processing']['iou_threshold'] = iou_thr
     context_info = dict()
     context_info['deploy_cfg'] = deploy_cfg
     output_prefix = osp.join(work_dir,
