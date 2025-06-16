@@ -41,5 +41,9 @@ def base_classifier__forward(
     elif isinstance(self.head, ConformerHead):
         output = F.softmax(torch.add(output[0], output[1]), dim=1)
     else:
-        output = F.softmax(output, dim=1)
+        pred_scores = F.softmax(output, dim=1)
+        pred_labels = pred_scores.argmax(dim=1, keepdim=True).detach()
+        pred_scores = torch.gather(pred_scores, dim=1, index=pred_labels)
+        output = torch.cat((pred_labels, pred_scores), dim=1)
+        # output = torch.squeeze(output)
     return output
