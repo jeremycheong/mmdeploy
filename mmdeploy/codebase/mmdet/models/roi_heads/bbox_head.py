@@ -153,7 +153,15 @@ def bbox_head__predict_by_feat(self,
     # encode version into scores
     batched_scores = embedding_version2scores(batched_scores, version)
 
-    return batched_num_dets, batched_dets, batched_scores, batched_labels, torch.tensor(version, dtype=torch.int32)
+    results = (batched_num_dets, batched_dets, batched_scores, batched_labels, torch.tensor(version, dtype=torch.int32))
+    # convert to one output, 多batch下，最后
+    if batched_dets.size(0) == 1:
+        bboxes = batched_dets[:, :-1, ...]
+        scores = batched_scores[:, :-1, None]
+        labels = batched_labels[:, :-1, None]
+        results = torch.cat([bboxes, scores, labels], dim=-1)
+
+    return results
 
 def embedding_version2scores(scores: torch.Tensor, version: int, exponent=2):
     assert version >= 0 and version < 100, f"ERROR: version need in range [0,100)"
