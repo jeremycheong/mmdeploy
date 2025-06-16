@@ -75,9 +75,10 @@ def torch2onnx(img: Any,
     input_metas = {'data_samples': data_samples, 'mode': 'predict'}
 
     # export to onnx
-    deploy_cfg['codebase_config']['post_processing']['version'] = version
-    deploy_cfg['codebase_config']['post_processing']['score_threshold'] = score_thr
-    deploy_cfg['codebase_config']['post_processing']['iou_threshold'] = iou_thr
+    if deploy_cfg['codebase_config'].get('post_processing', None) is not None:
+        deploy_cfg['codebase_config']['post_processing']['version'] = version
+        deploy_cfg['codebase_config']['post_processing']['score_threshold'] = score_thr
+        deploy_cfg['codebase_config']['post_processing']['iou_threshold'] = iou_thr
     context_info = dict()
     context_info['deploy_cfg'] = deploy_cfg
     output_prefix = osp.join(work_dir,

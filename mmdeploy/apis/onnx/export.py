@@ -105,7 +105,7 @@ def export(model: torch.nn.Module,
     if 'opset' not in context_info:
         context_info['opset'] = opset_version
 
-    version = deploy_cfg['codebase_config']['post_processing'].get('version', 99)
+    # version = deploy_cfg['codebase_config']['post_processing'].get('version', 99)
 
     # patch model
     patched_model = patch_model(model, cfg=deploy_cfg, backend=backend, ir=ir)
@@ -163,7 +163,7 @@ def export(model: torch.nn.Module,
             assert check, 'assert check failed'
         except Exception as e:
             logger.info(f'Simplify failure: {e}')
-        onnx_model.producer_version = str(version)
+        # onnx_model.producer_version = str(version)
         onnx.save(onnx_model, output_path)
 
         if input_metas is not None:
