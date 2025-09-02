@@ -11,6 +11,7 @@ from torch import Tensor
 from mmdeploy.codebase.mmdet.deploy import get_post_processing_params
 from mmdeploy.core import FUNCTION_REWRITER, mark
 from mmdeploy.mmcv.ops import multiclass_nms
+from mmdeploy.utils import embedding_version2scores
 
 
 @FUNCTION_REWRITER.register_rewriter(
@@ -162,11 +163,3 @@ def bbox_head__predict_by_feat(self,
         results = torch.cat([bboxes, scores, labels], dim=-1)
 
     return results
-
-def embedding_version2scores(scores: torch.Tensor, version: int, exponent=2):
-    assert version >= 0 and version < 100, f"ERROR: version need in range [0,100)"
-    scale = math.pow(10, exponent)
-    scores = (scores * scale).to(torch.int32).to(torch.float32)
-    version = version / 100
-    scores = (scores + version) / scale
-    return scores

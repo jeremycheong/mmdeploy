@@ -27,12 +27,13 @@ def get_logger(name: str,
     """
     # use logger in mmengine if exist.
     try:
+        mmengine_logger_name = 'mmengine'
         from mmengine.logging import MMLogger
-        if MMLogger.check_instance_created(name):
-            logger = MMLogger.get_instance(name)
+        if MMLogger.check_instance_created(mmengine_logger_name):
+            logger = MMLogger.get_instance(mmengine_logger_name)
         else:
             logger = MMLogger.get_instance(
-                name,
+                mmengine_logger_name,
                 log_file=log_file,
                 log_level=log_level,
                 file_mode=file_mode)

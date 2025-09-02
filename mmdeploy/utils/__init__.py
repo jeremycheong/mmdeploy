@@ -4,13 +4,13 @@ import importlib
 from .constants import IR, SDK_TASK_MAP, Backend, Codebase, Task
 from .device import parse_cuda_device_id, parse_device_id, parse_device_type
 from .env import get_backend_version, get_codebase_version, get_library_version
-from .utils import get_file_path, get_root_logger, target_wrapper
+from .utils import get_file_path, get_root_logger, target_wrapper, embedding_version2scores
 
 __all__ = [
     'SDK_TASK_MAP', 'IR', 'Backend', 'Codebase', 'Task',
     'parse_cuda_device_id', 'get_library_version', 'get_codebase_version',
     'get_backend_version', 'parse_device_id', 'get_file_path',
-    'get_root_logger', 'target_wrapper', 'parse_device_type'
+    'get_root_logger', 'target_wrapper', 'parse_device_type', 'embedding_version2scores'
 ]
 
 if importlib.util.find_spec('mmcv') is not None:

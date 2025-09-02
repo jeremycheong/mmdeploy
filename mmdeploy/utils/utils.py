@@ -5,6 +5,8 @@ import os
 import sys
 import traceback
 from typing import Callable, Optional, Union
+import math
+import torch
 
 try:
     from torch import multiprocessing as mp
@@ -126,3 +128,11 @@ def get_file_path(prefix, candidates) -> str:
             lib_path = paths[0]
             return lib_path
     return ''
+
+def embedding_version2scores(scores: torch.Tensor, version: int, exponent=2):
+    assert version >= 0 and version < 100, f"ERROR: version need in range [0,100)"
+    scale = math.pow(10, exponent)
+    scores = (scores * scale).to(torch.int32).to(torch.float32)
+    version = version / 100
+    scores = (scores + version) / scale
+    return scores
